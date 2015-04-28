@@ -58,16 +58,15 @@ def get_student_grade(github, project_title):
     """Given a student's github and project title, return the student's grade."""
 
     QUERY = """
-        SELECT s.github, g.project_title, g.grade
-        FROM Students AS s
-        JOIN Grades as g ON s.github = g.student_github
-        WHERE s.github = ? and g.project_title = ?
+        SELECT * FROM Grades
+        WHERE student_github = ? and project_title = ?
     """
 
     db_cursor.execute(QUERY, (github, project_title))
     row = db_cursor.fetchone()
 
     print "Github user %s scored a grade of %s on the %s project." %(row[0], row[2], row[1])
+
 
 def give_student_grade(github, project_title, grade):
     """Given a student's github and project title, assign them a grade for that project."""
@@ -76,16 +75,12 @@ def give_student_grade(github, project_title, grade):
         INSERT INTO Grades VALUES (?, ?, ?)
     """
 
-    check_query = "SELECT * FROM Grades"
+    check_query = """
+        SELECT * FROM Grades WHERE student_github = ? AND project_title = ?"""
 
-    db_cursor.execute(check_query)
-    results = db_cursor.fetchall()
-    grades_dict = {}
-    for result in results:
-        gh_project_key = result[0] + '-' + result[1]
-        grades_dict[gh_project_key] = result[2]
-
-    if github + '-' + project_title in grades_dict:
+    db_cursor.execute(check_query, (github, project_title))
+    results = db_cursor.fetchone()
+    if results:
         print "Student already has a grade for that project."
         return
     else:
@@ -93,7 +88,6 @@ def give_student_grade(github, project_title, grade):
 
         db_connection.commit()
         print "Successfully added student's grade for %s project." % (project_title)
-
 
 
 def handle_input():
