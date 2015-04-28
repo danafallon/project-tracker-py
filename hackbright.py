@@ -73,8 +73,27 @@ def give_student_grade(github, project_title, grade):
     """Given a student's github and project title, assign them a grade for that project."""
 
     QUERY = """
-        INSERT INTO Grades VALUES (?, ?, ?)         # in progress
+        INSERT INTO Grades VALUES (?, ?, ?)
     """
+
+    check_query = "SELECT * FROM Grades"
+
+    db_cursor.execute(check_query)
+    results = db_cursor.fetchall()
+    grades_dict = {}
+    for result in results:
+        gh_project_key = result[0] + '-' + result[1]
+        grades_dict[gh_project_key] = result[2]
+
+    if github + '-' + project_title in grades_dict:
+        print "Student already has a grade for that project."
+        return
+    else:
+        db_cursor.execute(QUERY, (github, project_title, grade))
+
+        db_connection.commit()
+        print "Successfully added student's grade for %s project." % (project_title)
+
 
 
 def handle_input():
@@ -106,6 +125,10 @@ def handle_input():
         elif command == 'grade':
             github, project_title = args
             get_student_grade(github, project_title)
+
+        elif command == 'add_grade':
+            github, project_title, grade = args
+            give_student_grade(github, project_title, grade)
 
 
 if __name__ == "__main__":
